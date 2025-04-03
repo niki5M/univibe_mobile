@@ -31,29 +31,31 @@ class _SchedulePageState extends State<SchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ScheduleBloc(),
-      child: BlocListener<ScheduleBloc, ScheduleState>(
-        listener: (context, state) {
-          if (state is DaySelectedState) {
-            _panelController.open();
-          }
-        },
-        child: Stack(
-          children: [
-            IndexedStack(
-              index: _selectedIndex,
-              children: _pages,
-            ),
-            SlidingUpPanel(
-              controller: _panelController,
-              minHeight: 0,
-              maxHeight: MediaQuery.of(context).size.height * 0.5,
-              panelBuilder: (sc) => ScheduleBottomPanel(scrollController: sc),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              backdropEnabled: false,
-            ),
-          ],
+    return Scaffold(
+      body: BlocProvider(
+        create: (context) => ScheduleBloc(),
+        child: BlocListener<ScheduleBloc, ScheduleState>(
+          listener: (context, state) {
+            if (state is DaySelectedState) {
+              _panelController.open();
+            }
+          },
+          child: Stack(
+            children: [
+              IndexedStack(
+                index: _selectedIndex,
+                children: _pages,
+              ),
+              SlidingUpPanel(
+                controller: _panelController,
+                minHeight: 0,
+                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                panelBuilder: (sc) => ScheduleBottomPanel(scrollController: sc),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                backdropEnabled: false,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -5,6 +5,10 @@ import 'package:equatable/equatable.dart';
 import 'package:uni_mobile/features/profile/bloc/profile_event.dart';
 import 'package:uni_mobile/features/profile/bloc/profile_state.dart';
 
+import '../../../core/auth/auth_repository.dart';
+import '../../../core/auth/bloc/auth_bloc.dart';
+import '../../../core/auth/bloc/auth_state.dart';
+
 class Profile {
   final String name;
   final String email;
@@ -38,7 +42,11 @@ class Profile {
 }
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  ProfileBloc() : super(ProfileLoading()) {
+  final AuthRepository authRepository;
+  final AuthBloc authBloc;
+
+  ProfileBloc({required this.authRepository, required this.authBloc})
+      : super(ProfileLoading()) {
     on<LoadProfile>(_onLoadProfile);
     on<UpdateProfile>(_onUpdateProfile);
   }
@@ -48,16 +56,31 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
     try {
       emit(ProfileLoading());
-      await Future.delayed(const Duration(seconds: 1));
-      emit(ProfileLoaded(
-          Profile(
-              name: 'Сейдаметов С.',
-              email: 'email@example.com',
-              group: 'Группа A'
-          )
-      ));
+
+      if (authBloc.state is! AuthAuthenticated) {
+        emit(ProfileError('Пользователь не аутентифицирован'));
+        return;
+      }
+
+      final accessToken = (authBloc.state as AuthAuthenticated).accessToken;
+      final userProfile = await authRepository.fetchUserProfile(accessToken);
+
+      if (userProfile == null) {
+        emit(ProfileError('Не удалось загрузить профиль'));
+        return;
+      }
+
+      final profile = Profile(
+        name: userProfile['name'] ??
+            userProfile['preferred_username'] ??
+            'Пользователь',
+        email: userProfile['email'] ?? 'email@example.com',
+        group: userProfile['group'] ?? 'Группа не указана',
+      );
+
+      emit(ProfileLoaded(profile));
     } catch (e) {
-      emit(ProfileError('Не удалось загрузить профиль'));
+      emit(ProfileError('Ошибка загрузки профиля: $e'));
     }
   }
 

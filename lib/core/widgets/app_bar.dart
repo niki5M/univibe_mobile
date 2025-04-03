@@ -163,7 +163,7 @@ class UserProfile extends StatelessWidget {
             ),
             child: CircleAvatar(
               radius: 18,
-              backgroundImage: AssetImage('assets/images/seyd.png'),
+              backgroundImage: AssetImage('assets/images/cat.jpeg'),
             ),
           ),
         ),
@@ -198,7 +198,7 @@ class ProfileSettings extends StatelessWidget {
                           const CircleAvatar(
                             radius: 40,
                             backgroundImage:
-                            AssetImage('assets/images/seyd.png'),
+                            AssetImage('assets/images/cat.jpeg'),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -270,7 +270,6 @@ class ProfileSettings extends StatelessWidget {
             title: const Text("Уведомления"),
             trailing: const Switch(value: true, onChanged: null),
           ),
-          // Замена ListTile для выхода
           const LogoutButton(),
         ],
       ),

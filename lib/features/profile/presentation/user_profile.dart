@@ -141,7 +141,7 @@ class EditProfilePage extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 60,
                       backgroundColor: colorScheme.surfaceVariant,
-                      backgroundImage: const AssetImage('assets/images/seyd.png'),
+                      backgroundImage: const AssetImage('assets/images/cat.jpeg'),
                     ),
                   ),
                   const SizedBox(height: 20),

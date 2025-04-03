@@ -19,20 +19,18 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  // Флаг для запуска анимации
   late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
-    _selectedIndex = -1; // Изначально нет выбранного элемента
+    _selectedIndex = 0;
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ScheduleBloc, ScheduleState>(
       builder: (context, state) {
-        // Если состояние переключения индекса обновилось, то обновим _selectedIndex
         if (state is BottomNavSelectedState) {
           _selectedIndex = state.selectedIndex;
         }

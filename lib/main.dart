@@ -47,15 +47,33 @@ class MyApp extends StatelessWidget {
           create: (context) => ScheduleBloc(),
           lazy: false,
         ),
-        BlocProvider<ProfileBloc>(
-          create: (context) => ProfileBloc()..add(LoadProfile()),
-        ),
+        // BlocProvider<ProfileBloc>(
+        //   create: (context) => ProfileBloc()..add(LoadProfile()),
+        // ),
         BlocProvider<ThemeBloc>(
           create: (context) => ThemeBloc(),
         ),
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(authRepository: AuthRepository()),
         ),
+        BlocProvider(
+          create: (context) => AuthBloc(authRepository: AuthRepository()),
+        ),
+        BlocProvider(
+          create: (context) => AuthBloc(authRepository: AuthRepository()),
+        ),
+        BlocProvider(
+          create: (context) => ProfileBloc(
+            authRepository: AuthRepository(),
+            authBloc: context.read<AuthBloc>(),
+          )..add(LoadProfile()),
+        ),
+        // BlocProvider(
+        //   create: (context) => ProfileBloc(
+        //     authRepository: AuthRepository(),
+        //     authBloc: context.read<AuthBloc>(),
+        //   ),
+        // ),
       ],
       child: BlocBuilder<ThemeBloc, ThemeData>(
         builder: (context, theme) {
