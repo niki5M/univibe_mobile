@@ -53,7 +53,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           Profile(
               name: 'Сейдаметов С.',
               email: 'email@example.com',
-              group: 'Группа A'  // Пример значения для поля group
+              group: 'Группа A'
           )
       ));
     } catch (e) {

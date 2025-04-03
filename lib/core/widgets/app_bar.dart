@@ -3,6 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../../features/profile/bloc/profile_bloc.dart';
 import '../../features/profile/bloc/profile_state.dart';
+import '../auth/bloc/auth_bloc.dart';
+import '../auth/bloc/auth_event.dart';
+import '../auth/bloc/auth_state.dart';
+import '../auth/presentation/login_page.dart';
 import '../theme/theme_bloc.dart';
 
 class ScheduleAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -266,14 +270,8 @@ class ProfileSettings extends StatelessWidget {
             title: const Text("Уведомления"),
             trailing: const Switch(value: true, onChanged: null),
           ),
-          ListTile(
-            leading: Icon(
-              Icons.help,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            title: const Text("Помощь"),
-            trailing: const Icon(Icons.arrow_forward_ios),
-          ),
+          // Замена ListTile для выхода
+          const LogoutButton(),
         ],
       ),
     );
@@ -292,6 +290,32 @@ class ProfileNameInAppBar extends StatelessWidget {
         }
         return const Text('Загрузка...');
       },
+    );
+  }
+}
+
+class LogoutButton extends StatelessWidget {
+  const LogoutButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthInitial) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+                (route) => false,
+          );
+        }
+      },
+      child: ListTile(
+        leading: Icon(Icons.exit_to_app, color: Theme.of(context).iconTheme.color),
+        title: const Text("Выход из аккаунта"),
+        onTap: () {
+          context.read<AuthBloc>().add(AuthLogoutRequested());
+        },
+      ),
     );
   }
 }

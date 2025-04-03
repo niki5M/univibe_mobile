@@ -1,4 +1,6 @@
 import 'package:flutter_appauth/flutter_appauth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthRepository {
   final FlutterAppAuth _appAuth = FlutterAppAuth();
@@ -25,11 +27,15 @@ class AuthRepository {
           _clientId,
           _redirectUrl,
           serviceConfiguration: _serviceConfiguration,
-          scopes: ['openid'],
+          scopes: ['openid', 'profile', 'email'],
         ),
       );
 
       if (result != null) {
+        print("Access Token: ${result.accessToken}");
+        print("Refresh Token: ${result.refreshToken}");
+        print("ID Token: ${result.idToken}");
+
         return {
           'accessToken': result.accessToken ?? '',
           'refreshToken': result.refreshToken ?? '',
@@ -40,6 +46,49 @@ class AuthRepository {
     } catch (e) {
       print('Authorization error: $e');
       return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchUserProfile(String accessToken) async {
+    final userInfoUrl =
+        'https://keycloak.univibe.ru/realms/univibe/protocol/openid-connect/userinfo';
+
+    try {
+      final response = await http.get(
+        Uri.parse(userInfoUrl),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("Failed to fetch user profile: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("User profile fetch error: $e");
+      return null;
+    }
+  }
+
+  Future<void> logout(String idToken) async {
+    final logoutUrl =
+        'https://keycloak.univibe.ru/realms/univibe/protocol/openid-connect/logout';
+
+    try {
+      final response = await http.post(
+        Uri.parse(logoutUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'id_token_hint': idToken, 'client_id': _clientId},
+      );
+
+      if (response.statusCode == 200) {
+        print("Logout successful");
+      } else {
+        print("Logout failed: ${response.body}");
+      }
+    } catch (e) {
+      print("Logout error: $e");
     }
   }
 }
