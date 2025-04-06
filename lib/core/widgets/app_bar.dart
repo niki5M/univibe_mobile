@@ -183,7 +183,10 @@ class ProfileSettings extends StatelessWidget {
       builder: (context, theme) {
         return SlidingUpPanel(
           minHeight: 600,
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          maxHeight: MediaQuery
+              .of(context)
+              .size
+              .height * 0.6,
           panelBuilder: (ScrollController scrollController) {
             return Scaffold(
               backgroundColor: theme.scaffoldBackgroundColor,
@@ -234,23 +237,15 @@ class ProfileSettings extends StatelessWidget {
     return Expanded(
       child: ListView(
         children: [
-          ListTile(
-            leading: Icon(
-              Icons.edit,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            title: const Text("Редактировать профиль"),
-            onTap: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            trailing: const Icon(Icons.arrow_forward_ios),
-          ),
           BlocBuilder<ThemeBloc, ThemeData>(
             builder: (context, themeState) {
               return ListTile(
                 leading: Icon(
                   Icons.dark_mode,
-                  color: Theme.of(context).iconTheme.color,
+                  color: Theme
+                      .of(context)
+                      .iconTheme
+                      .color,
                 ),
                 title: const Text("Темная тема"),
                 trailing: Switch(
@@ -265,7 +260,10 @@ class ProfileSettings extends StatelessWidget {
           ListTile(
             leading: Icon(
               Icons.notifications,
-              color: Theme.of(context).iconTheme.color,
+              color: Theme
+                  .of(context)
+                  .iconTheme
+                  .color,
             ),
             title: const Text("Уведомления"),
             trailing: const Switch(value: true, onChanged: null),
