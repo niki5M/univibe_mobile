@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:uni_mobile/features/schedule/presentation/widgets/bottom_sheet_widget.dart';
 import 'package:uni_mobile/features/schedule/presentation/widgets/calendar_widget.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../settings/presentation/widgets/setting_page.dart';
 import '../bloc/schedule_bloc.dart';
 import '../bloc/schedule_state.dart';
@@ -16,8 +16,6 @@ class SchedulePage extends StatefulWidget {
 
 class _SchedulePageState extends State<SchedulePage> {
   int _selectedIndex = 0;
-  final PanelController _panelController = PanelController();
-
   final List<Widget> _pages = [
     const CalendarWidget(),
     const SettingPage(),
@@ -37,7 +35,32 @@ class _SchedulePageState extends State<SchedulePage> {
         child: BlocListener<ScheduleBloc, ScheduleState>(
           listener: (context, state) {
             if (state is DaySelectedState) {
-              _panelController.open();
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return Container(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    // color: Colors.transparent,
+                    child: Stack(
+                      children: [
+                        ScheduleModalSheet(groupName: "И-1-22(а)"),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: BottomNavBar(
+                            onItemTapped: (index) {
+                              // Handle navigation
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
             }
           },
           child: Stack(
@@ -45,14 +68,6 @@ class _SchedulePageState extends State<SchedulePage> {
               IndexedStack(
                 index: _selectedIndex,
                 children: _pages,
-              ),
-              SlidingUpPanel(
-                controller: _panelController,
-                minHeight: 0,
-                maxHeight: MediaQuery.of(context).size.height * 0.5,
-                panelBuilder: (sc) => ScheduleBottomPanel(scrollController: sc),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                backdropEnabled: false,
               ),
             ],
           ),

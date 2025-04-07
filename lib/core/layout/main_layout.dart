@@ -14,7 +14,7 @@ class MainLayout extends StatelessWidget {
     return Scaffold(
       appBar: (currentRoute == '/profile' || currentRoute == '/login')
           ? null
-          : const ScheduleAppBar(selectedGroup: "И-1-21(a)"),
+          : const CustomAppBar(selectedGroup: "И-1-21(a)"),
       body: child,
       bottomNavigationBar: BottomNavBar(
         onItemTapped: (index) {

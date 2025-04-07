@@ -1,13 +1,9 @@
-// bottom_nav_bar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../features/schedule/bloc/schedule_bloc.dart';
 import '../../features/schedule/bloc/schedule_event.dart';
 import '../../features/schedule/bloc/schedule_state.dart';
-import '../../features/schedule/data/models/nav_item_model.dart';
-
-const Color bottomNavBGColor = Color(0xfff3edf5);
 
 class BottomNavBar extends StatefulWidget {
   final Function(int) onItemTapped;
@@ -18,88 +14,158 @@ class BottomNavBar extends StatefulWidget {
   _BottomNavBarState createState() => _BottomNavBarState();
 }
 
-class _BottomNavBarState extends State<BottomNavBar> {
+class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderStateMixin {
   late int _selectedIndex;
+  late AnimationController _animationController;
+  late Animation<Offset> _textAnimation;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = 0;
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _textAnimation = Tween<Offset>(
+      begin: const Offset(0, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final isDarkMode = brightness == Brightness.dark;
+
     return BlocBuilder<ScheduleBloc, ScheduleState>(
       builder: (context, state) {
         if (state is BottomNavSelectedState) {
           _selectedIndex = state.selectedIndex;
+          _animationController.forward(from: 0.0);
         }
 
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Container(
-              height: 90,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: bottomNavBGColor.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(34),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    offset: const Offset(0, 10),
-                    blurRadius: 20,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xff0a1429) : Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+              border: Border.all(color: ShadTheme.of(context).colorScheme.border, width: 1),
+            ),
+            margin: const EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    left: _selectedIndex == 0 ? 0 : MediaQuery.of(context).size.width * 0.5,
+                    right: _selectedIndex == 1 ? 0 : MediaQuery.of(context).size.width * 0.5,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.45,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(child: _buildNavItem(0, 'Schedule', Icons.calendar_month_outlined, context, isDarkMode)),
+                      Expanded(child: _buildNavItem(1, 'Chat', Icons.email_outlined, context, isDarkMode)),
+                    ],
                   ),
                 ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  bottomNavItems.length,
-                      (index) {
-                    final isSelected = _selectedIndex == index;
-
-                    return GestureDetector(
-                      onTap: () {
-                        context.read<ScheduleBloc>().add(
-                          SelectBottomNavEvent(index),
-                        );
-                        widget.onItemTapped(index);
-                        setState(() {
-                          _selectedIndex = index;
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Color(0xffb392a0) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Transform.translate(
-                          offset: isSelected
-                              ? Offset(0, -10)
-                              : Offset(0, 0),
-                          child: AnimatedScale(
-                            duration: const Duration(milliseconds: 300),
-                            scale: isSelected ? 1.2 : 1.0,
-                            child: Lottie.asset(
-                              bottomNavItems[index].lottie.src,
-                              width: 80,
-                              height: 80,
-                              animate: isSelected,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildNavItem(int index, String label, IconData icon, BuildContext context, bool isDarkMode) {
+    final isSelected = _selectedIndex == index;
+    final colorScheme = ShadTheme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: () {
+        context.read<ScheduleBloc>().add(SelectBottomNavEvent(index));
+        widget.onItemTapped(index);
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        width: MediaQuery.of(context).size.width * 0.45,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDarkMode ? Colors.white : colorScheme.primary)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: isSelected
+              ? [
+            BoxShadow(
+              color: colorScheme.primary.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ]
+              : [],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? (isDarkMode ? Colors.black : Colors.white) : (isDarkMode ? Colors.white70 : colorScheme.mutedForeground),
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: isSelected
+                  ? SlideTransition(
+                position: _textAnimation,
+                child: Text(
+                  label,
+                  key: ValueKey<int>(index),
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+                  : SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
