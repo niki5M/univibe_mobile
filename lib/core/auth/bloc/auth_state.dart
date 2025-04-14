@@ -6,7 +6,12 @@ class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
   final String accessToken;
-  AuthAuthenticated(this.accessToken);
+  final Map<String, dynamic>? userProfile;
+
+  AuthAuthenticated({
+    required this.accessToken,
+    this.userProfile,
+  });
 }
 
 class AuthError extends AuthState {

@@ -19,7 +19,7 @@ class AuthRepository {
     'https://keycloak.univibe.ru/realms/univibe/protocol/openid-connect/logout',
   );
 
-  Future<Map<String, String>?> login() async {
+  Future<Map<String, dynamic>?> login() async {
     try {
       final AuthorizationTokenResponse? result =
       await _appAuth.authorizeAndExchangeCode(
@@ -32,14 +32,13 @@ class AuthRepository {
       );
 
       if (result != null) {
-        print("Access Token: ${result.accessToken}");
-        print("Refresh Token: ${result.refreshToken}");
-        print("ID Token: ${result.idToken}");
+        final userProfile = await fetchUserProfile(result.accessToken!);
 
         return {
           'accessToken': result.accessToken ?? '',
           'refreshToken': result.refreshToken ?? '',
           'idToken': result.idToken ?? '',
+          'userProfile': userProfile,
         };
       }
       return null;

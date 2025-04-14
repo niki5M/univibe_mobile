@@ -7,16 +7,20 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
 class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthAuthenticated) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => MainLayout(child: const SchedulePage())),
+                MaterialPageRoute(
+                  builder: (_) => MainLayout(child: const SchedulePage()),
+                ),
               );
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -26,13 +30,41 @@ class LoginPage extends StatelessWidget {
           },
           builder: (context, state) {
             if (state is AuthLoading) {
-              return const CircularProgressIndicator();
+              return const Center(child: CircularProgressIndicator());
             }
-            return ElevatedButton(
-              onPressed: () {
-                context.read<AuthBloc>().add(AuthLoginRequested());
-              },
-              child: const Text("Login with Keycloak"),
+
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/icons/logo.png',
+                      height: 130,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<AuthBloc>().add(AuthLoginRequested());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Войти через SSO",
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         ),

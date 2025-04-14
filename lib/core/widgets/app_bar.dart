@@ -1,24 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../features/profile/bloc/profile_bloc.dart';
 import '../../features/profile/bloc/profile_state.dart';
-// import '../../features/profile/models/profile_model.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
-import '../auth/bloc/auth_state.dart';
-import '../auth/presentation/login_page.dart';
 import '../theme/theme_bloc.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String selectedGroup;
-  final ValueChanged<String>? onGroupChanged;
-
-  const CustomAppBar({
-    super.key,
-    required this.selectedGroup,
-    this.onGroupChanged,
-  });
+  const CustomAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -26,41 +17,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       title: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Уменьшили отступы
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildGroupSelection(context),
             _buildUserProfile(context),
+            _buildActionIcons(context),
           ],
         ),
       ),
-      flexibleSpace: BlocBuilder<ThemeBloc, ThemeData>(
-        builder: (context, theme) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20.0),
-                bottomRight: Radius.circular(20.0),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildGroupSelection(BuildContext context) {
-    const groups = ['И-1-21(а)', 'И-2-21(б)', 'И-1-22(a)'];
-
-    return GroupSelection(
-      selectedGroup: selectedGroup,
-      groups: groups,
-      onGroupChanged: onGroupChanged,
     );
   }
 
@@ -68,138 +37,94 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
         if (state is ProfileLoaded) {
-          return UserProfile(
-            profile: state.profile,
+          return Row(
+            children: [
+              _buildProfileAvatar(context, state.profile),
+              const SizedBox(width: 8), // Уменьшили отступ
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    state.profile.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  Text(
+                    state.profile.group,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           );
         }
         return const SizedBox.shrink();
       },
     );
   }
-}
 
-class GroupSelection extends StatelessWidget {
-  final String selectedGroup;
-  final List<String> groups;
-  final ValueChanged<String>? onGroupChanged;
-
-  const GroupSelection({
-    Key? key,
-    required this.selectedGroup,
-    required this.groups,
-    this.onGroupChanged,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = Theme.of(context).textTheme.bodyMedium?.color;
-    final iconColor = Theme.of(context).iconTheme.color;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(Icons.group_rounded, color: iconColor),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (onGroupChanged != null) {
-                  onGroupChanged!(value);
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return groups.map((String choice) {
-                  return PopupMenuItem<String>(
-                    value: choice,
-                    child: Text(choice, style: TextStyle(color: textColor)),
-                  );
-                }).toList();
-              },
-              child: Row(
-                children: [
-                  Text("Ваша группа", style: TextStyle(fontSize: 15, color: textColor)),
-                  Icon(Icons.arrow_drop_down, color: iconColor),
-                ],
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(selectedGroup, style: TextStyle(fontSize: 15, color: textColor)),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class UserProfile extends StatelessWidget {
-  final Profile profile;
-
-  const UserProfile({
-    Key? key,
-    required this.profile,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = Theme.of(context).textTheme.bodyLarge?.color;
-    final smallTextColor = Theme.of(context).textTheme.bodySmall?.color;
-    final iconColor = Theme.of(context).iconTheme.color;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              profile.name,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              profile.group,
-              style: TextStyle(
-                fontSize: 10,
-                color: smallTextColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) {
-                return ShadProfileSheet(profile: profile);
-              },
-            );
-          },
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: iconColor ?? Colors.grey,
-                width: 2,
-              ),
-            ),
-            child: const CircleAvatar(
-              radius: 18,
-              backgroundImage: AssetImage('assets/images/cat.jpeg'),
-            ),
+  Widget _buildProfileAvatar(BuildContext context, Profile profile) {
+    return GestureDetector(
+      onTap: () => _showProfileSheet(context, profile),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Theme.of(context).iconTheme.color ?? Colors.grey,
+            width: 1.5,
           ),
         ),
-      ],
+        child: const CircleAvatar(
+          backgroundImage: AssetImage('assets/images/cat.jpeg'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionIcons(BuildContext context) {
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, state) {
+        if (state is ProfileLoaded) {
+          return Row(
+            children: [
+              ShadButton.ghost(
+                padding: const EdgeInsets.all(6), // Уменьшили padding
+                child: const Icon(LucideIcons.bellRing, size: 24), // Уменьшили размер иконки
+                onPressed: () {
+                  // TODO: Реализовать обработку уведомлений
+                },
+              ),
+              ShadButton.ghost(
+                padding: const EdgeInsets.all(6),
+                child: const Icon(LucideIcons.component, size: 24),
+                onPressed: () {
+                  // Вызываем тот же метод, что и для аватарки
+                  _showProfileSheet(context, state.profile);
+                },
+              ),
+            ],
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  void _showProfileSheet(BuildContext context, Profile profile) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ShadProfileSheet(profile: profile),
     );
   }
 }
@@ -211,109 +136,108 @@ class ShadProfileSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = Theme.of(context).textTheme.bodyMedium?.color;
-    final iconColor = Theme.of(context).iconTheme.color;
+    final theme = ShadTheme.of(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).dialogBackgroundColor,
+        color: theme.colorScheme.background,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircleAvatar(
-              radius: 40,
-              backgroundImage: AssetImage('assets/images/cat.jpeg'),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircleAvatar(
+            radius: 40,
+            backgroundImage: AssetImage('assets/images/cat.jpeg'),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            profile.name,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.foreground,
             ),
-            const SizedBox(height: 16),
-            Text(
-              profile.name,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            profile.email,
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.mutedForeground,
             ),
-            Text(
-              profile.email,
-              style: TextStyle(
-                fontSize: 14,
-                color: textColor?.withOpacity(0.6),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildSettingsList(context, textColor, iconColor),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          _buildSettingsList(context),
+        ],
       ),
     );
   }
 
-  Widget _buildSettingsList(
-      BuildContext context,
-      Color? textColor,
-      Color? iconColor,
-      ) {
-    return Column(
-      children: [
-        BlocBuilder<ThemeBloc, ThemeData>(
-          builder: (context, themeState) {
-            return ListTile(
-              leading: Icon(Icons.dark_mode, color: iconColor),
-              title: Text("Темная тема", style: TextStyle(color: textColor)),
-              trailing: Switch(
-                value: themeState.brightness == Brightness.dark,
-                onChanged: (value) {
-                  BlocProvider.of<ThemeBloc>(context).add(ToggleTheme());
-                },
-              ),
-            );
-          },
-        ),
-        ListTile(
-          leading: Icon(Icons.notifications, color: iconColor),
-          title: Text("Уведомления", style: TextStyle(color: textColor)),
-          trailing: const Switch(value: true, onChanged: null),
-        ),
-        const LogoutButton(),
-      ],
-    );
-  }
-}
+  Widget _buildSettingsList(BuildContext context) {
+    final theme = ShadTheme.of(context);
 
-
-
-class LogoutButton extends StatelessWidget {
-  const LogoutButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = Theme.of(context).textTheme.bodyMedium?.color;
-    final iconColor = Theme.of(context).iconTheme.color;
-
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthInitial) {
-          Navigator.pushAndRemoveUntil(
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildListTile(
             context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-                (route) => false,
-          );
-        }
-      },
-      child: ListTile(
-        leading: Icon(Icons.exit_to_app, color: iconColor),
-        title: Text("Выход из аккаунта", style: TextStyle(color: textColor)),
-        onTap: () {
-          context.read<AuthBloc>().add(AuthLogoutRequested());
-        },
+            icon: LucideIcons.moon,
+            title: "Темная тема",
+            trailing: Switch(
+              value: theme.brightness == Brightness.dark,
+              onChanged: (value) {
+                context.read<ThemeBloc>().add(ToggleTheme());
+              },
+            ),
+          ),
+          _buildListTile(
+            context,
+            icon: LucideIcons.bell,
+            title: "Уведомления",
+            trailing: const Switch(value: true, onChanged: null),
+          ),
+          const Divider(height: 1),
+          _buildListTile(
+            context,
+            icon: LucideIcons.logOut,
+            title: "Выход из аккаунта",
+            onTap: () {
+              context.read<AuthBloc>().add(AuthLogoutRequested());
+            },
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildListTile(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        Widget? trailing,
+        VoidCallback? onTap,
+      }) {
+    final theme = ShadTheme.of(context);
+
+    return ListTile(
+      leading: Icon(icon, size: 28, color: theme.colorScheme.foreground),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          color: theme.colorScheme.foreground,
+        ),
+      ),
+      trailing: trailing,
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+      minLeadingWidth: 35,
     );
   }
 }

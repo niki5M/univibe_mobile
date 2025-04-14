@@ -24,7 +24,7 @@ class CalendarWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Transform.scale(
-                scale: 1.4,
+                scale: 1.2,
                 child: ShadCalendar(
                   selected: today,
                   fromMonth: DateTime(today.year - 1),

@@ -3,12 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:uni_mobile/features/documents/presentation/doc_main_screen.dart';
+
 
 import 'core/auth/auth_repository.dart';
 import 'core/auth/bloc/auth_bloc.dart';
 import 'core/auth/presentation/login_page.dart';
 import 'core/layout/main_layout.dart';
 import 'core/theme/theme_bloc.dart';
+import 'features/cart/floormap_screen.dart';
+import 'features/documents/bloc/doc_bloc.dart';
 import 'features/profile/bloc/profile_bloc.dart';
 import 'features/profile/bloc/profile_event.dart';
 import 'features/schedule/bloc/schedule_bloc.dart';
@@ -16,8 +20,10 @@ import 'features/schedule/presentation/schedule_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await _initializeApp();
-  runApp(const MyApp());
+
+  runApp(MyApp());
 }
 
 Future<void> _initializeApp() async {
@@ -49,6 +55,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(authRepository: AuthRepository()),
         ),
+        BlocProvider<DocumentBloc>(
+          create: (context) => DocumentBloc(),
+        ),
         BlocProvider<ProfileBloc>(
           create: (context) => ProfileBloc(
             authRepository: AuthRepository(),
@@ -74,6 +83,8 @@ class MyApp extends StatelessWidget {
               '/': (context) => LoginPage(),
               '/login': (context) => LoginPage(),
               '/schedule': (context) => MainLayout(child: const SchedulePage()),
+              '/documents': (context) => MainLayout(child: const DocMainScreen()),
+              '/floor': (context) => MainLayout(child: const FloorMapScreen()),
             },
             debugShowCheckedModeBanner: false,
           );

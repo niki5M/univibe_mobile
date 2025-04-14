@@ -6,6 +6,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
   String? idToken;
+  Map<String, dynamic>? userProfile;
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
     on<AuthLoginRequested>((event, emit) async {
@@ -13,7 +14,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final authData = await authRepository.login();
       if (authData != null) {
         idToken = authData['idToken'];
-        emit(AuthAuthenticated(authData['accessToken']!));
+        userProfile = authData['userProfile'];
+        emit(AuthAuthenticated(
+          accessToken: authData['accessToken']!,
+          userProfile: userProfile,
+        ));
       } else {
         emit(AuthError("Ошибка авторизации"));
       }
@@ -24,6 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await authRepository.logout(idToken!);
       }
       idToken = null;
+      userProfile = null;
       emit(AuthInitial());
     });
   }
