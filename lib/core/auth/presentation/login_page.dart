@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../features/home/presentation/home_page.dart';
 import '../../../features/schedule/presentation/schedule_page.dart';
 import '../../layout/main_layout.dart';
 import '../bloc/auth_bloc.dart';
@@ -19,7 +20,7 @@ class LoginPage extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MainLayout(child: const SchedulePage()),
+                  builder: (_) => MainLayout(child: const HomePage()),
                 ),
               );
             } else if (state is AuthError) {

@@ -33,6 +33,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+
   Widget _buildUserProfile(BuildContext context) {
     return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
@@ -53,6 +54,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
+                  // Text(
+                  //   state.profile.id,
+                  //   style: TextStyle(
+                  //     fontSize: 16,
+                  //     fontWeight: FontWeight.w500,
+                  //     color: Theme.of(context).textTheme.bodyLarge?.color,
+                  //   ),
+                  // ),
                   Text(
                     state.profile.group,
                     style: TextStyle(

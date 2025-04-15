@@ -10,18 +10,22 @@ import '../../../core/auth/bloc/auth_bloc.dart';
 import '../../../core/auth/bloc/auth_state.dart';
 
 class Profile {
+  final String id;
   final String name;
   final String email;
   final String group;
 
-  Profile({required this.name, required this.email, required this.group});
+
+  Profile({required this.name, required this.email, required this.group, required this.id});
 
   Profile copyWith({
+    String? id,
     String? name,
     String? email,
     String? group,
   }) {
     return Profile(
+      id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
       group: group ?? this.group,
@@ -35,10 +39,12 @@ class Profile {
               runtimeType == other.runtimeType &&
               name == other.name &&
               email == other.email &&
-              group == other.group;
+              group == other.group &&
+              id == other.id
+  ;
 
   @override
-  int get hashCode => name.hashCode ^ email.hashCode ^ group.hashCode;
+  int get hashCode => id.hashCode ^ name.hashCode ^ email.hashCode ^ group.hashCode;
 }
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
@@ -71,6 +77,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       }
 
       final profile = Profile(
+        id: userProfile['sub'] ?? 'ID',
         name: userProfile['name'] ??
             userProfile['preferred_username'] ??
             'Пользователь',

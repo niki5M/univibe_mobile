@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uni_mobile/features/schedule/presentation/widgets/bottom_sheet_widget.dart';
 import 'package:uni_mobile/features/schedule/presentation/widgets/calendar_widget.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
-import '../../settings/presentation/widgets/setting_page.dart';
+
 import '../bloc/schedule_bloc.dart';
 import '../bloc/schedule_state.dart';
 
@@ -18,7 +18,6 @@ class _SchedulePageState extends State<SchedulePage> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
     const CalendarWidget(),
-    const SettingPage(),
   ];
 
   void _onItemTapped(int index) {

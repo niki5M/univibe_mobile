@@ -11,7 +11,7 @@ class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key, required this.onItemTapped});
 
   @override
-  _BottomNavBarState createState() => _BottomNavBarState();
+  State<BottomNavBar> createState() => _BottomNavBarState();
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
@@ -19,9 +19,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final isDarkMode = brightness == Brightness.dark;
-    // final colorScheme = ShadTheme.of(context).colorScheme;
+    final theme = ShadTheme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return BlocBuilder<ScheduleBloc, ScheduleState>(
       builder: (context, state) {
@@ -29,48 +28,24 @@ class _BottomNavBarState extends State<BottomNavBar> {
           _selectedIndex = state.selectedIndex;
         }
 
-        return SafeArea(
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? Color(0xff0a1429) : Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-              border: Border.all(
-                color: ShadTheme.of(context).colorScheme.border,
+        return Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: colorScheme.border,
                 width: 1,
               ),
             ),
-            margin: const EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Stack(
+          ),
+          child: SafeArea(
+            child: SizedBox(
+              height: 64,
+              child: Row(
                 children: [
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    left: _getIndicatorPosition(context),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width / 3 - 32,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      _buildNavItem(0, Icons.calendar_month_outlined, context, isDarkMode),
-                      _buildNavItem(1, Icons.email_outlined, context, isDarkMode),
-                      _buildNavItem(2, Icons.person_outline, context, isDarkMode),
-                    ],
-                  ),
+                  _buildNavItem(0, Icons.home_outlined, 'Главная', context),
+                  _buildNavItem(1, Icons.calendar_today_outlined, 'Расписание', context),
+                  _buildNavItem(2, Icons.description_outlined, 'Документы', context),
+                  _buildNavItem(3, Icons.person_outlined, 'Профиль', context),
                 ],
               ),
             ),
@@ -80,43 +55,65 @@ class _BottomNavBarState extends State<BottomNavBar> {
     );
   }
 
-  double _getIndicatorPosition(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return (_selectedIndex * (width / 3)) + (width / 3 - (width / 3 - 32)) / 2 - 16;
-  }
-
-  Widget _buildNavItem(int index, IconData icon, BuildContext context, bool isDarkMode) {
+  Widget _buildNavItem(int index, IconData icon, String label, BuildContext context) {
+    final theme = ShadTheme.of(context);
     final isSelected = _selectedIndex == index;
-    final colorScheme = ShadTheme.of(context).colorScheme;
 
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
         onTap: () {
           context.read<ScheduleBloc>().add(SelectBottomNavEvent(index));
           widget.onItemTapped(index);
 
-          if (index == 0) {
-            Navigator.pushNamed(context, '/schedule');
-          } else if (index == 1) {
-            Navigator.pushNamed(context, '/documents');
-          } else if (index == 2) {
-
+          switch (index) {
+            case 0:
+              Navigator.pushNamed(context, '/home');
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/schedule');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/documents');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/profile');
+              break;
           }
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Icon(
-            icon,
-            color: isSelected
-                ? (isDarkMode ? Colors.black : Colors.white)
-                : (isDarkMode ? Colors.white70 : colorScheme.mutedForeground),
-            size: 28,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 20,
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.mutedForeground,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
