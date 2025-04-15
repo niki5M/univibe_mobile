@@ -21,7 +21,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       title: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Уменьшили отступы
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -40,7 +40,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           return Row(
             children: [
               _buildProfileAvatar(context, state.profile),
-              const SizedBox(width: 8), // Уменьшили отступ
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -97,8 +97,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           return Row(
             children: [
               ShadButton.ghost(
-                padding: const EdgeInsets.all(6), // Уменьшили padding
-                child: const Icon(LucideIcons.bellRing, size: 24), // Уменьшили размер иконки
+                padding: const EdgeInsets.all(6),
+                child: const Icon(LucideIcons.bellRing, size: 24),
                 onPressed: () {
                   // TODO: Реализовать обработку уведомлений
                 },
@@ -107,7 +107,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 padding: const EdgeInsets.all(6),
                 child: const Icon(LucideIcons.component, size: 24),
                 onPressed: () {
-                  // Вызываем тот же метод, что и для аватарки
                   _showProfileSheet(context, state.profile);
                 },
               ),
@@ -137,6 +136,13 @@ class ShadProfileSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+
+    final roles = {
+      'student': 'Студент',
+      'teacher': 'Преподаватель',
+      'admin': 'Администратор',
+      'moderator': 'Модератор',
+    };
 
     return Container(
       decoration: BoxDecoration(
@@ -172,6 +178,38 @@ class ShadProfileSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ShadSelect<String>(
+              placeholder: const Text('Выберите роль'),
+              options: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 6, 6, 6),
+                  child: Text(
+                    'Роли',
+                    style: theme.textTheme.muted.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.popoverForeground,
+                    ),
+                    textAlign: TextAlign.start,
+                  ),
+                ),
+                ...roles.entries.map(
+                      (e) => ShadOption(
+                    value: e.key,
+                    child: Text(e.value),
+                  ),
+                ),
+              ],
+              selectedOptionBuilder: (context, value) =>
+                  Text(roles[value] ?? 'Не выбрано'),
+              onChanged: (value) {
+                print('Выбрана роль: $value');
+                // Здесь можно вызвать Bloc-событие или сохранить роль
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
           _buildSettingsList(context),
         ],
       ),
@@ -182,7 +220,7 @@ class ShadProfileSheet extends StatelessWidget {
     final theme = ShadTheme.of(context);
 
     return Padding(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           _buildListTile(
