@@ -1,7 +1,9 @@
+import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/home_bloc.dart';
-import '../bloc/home_state.dart';
+import 'package:intl/intl.dart';
+import 'package:uni_mobile/features/schedule/presentation/schedule_page.dart';
+import '../../../core/layout/main_layout.dart';
+import '../data/cards.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,28 +12,53 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class HomeInitial extends HomeState {}
-
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+  late final EventController eventController;
+  bool _showCalendar = false; // Добавляем состояние для переключения вида
+
+  @override
+  void initState() {
+    super.initState();
+    eventController = EventController()..addAll(_generateEventsFromClasses());
+  }
+
+  @override
+  void dispose() {
+    eventController.dispose();
+    super.dispose();
+  }
+
+  Color _statusColor(StatusType type) {
+    switch (type) {
+      case StatusType.ready:
+        return Colors.green;
+      case StatusType.inProgress:
+        return Colors.orange;
+      case StatusType.rejected:
+        return Colors.red;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocProvider(
-        create: (context) => HomeBloc(),
-        child: SingleChildScrollView(
+    final upcomingClasses = mockClasses.take(3).toList();
+
+    return CalendarControllerProvider(
+      controller: eventController,
+      child: Scaffold(
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // _buildWelcomeHeader(),
-              // const SizedBox(height: 24),
-              _buildNearestClassesCard(),
+              // Условный рендеринг в зависимости от состояния _showCalendar
+              if (!_showCalendar)
+                _buildNearestClassesCard(context, upcomingClasses),
+              if (_showCalendar)
+                _buildDayCalendarCard(context),
+
               const SizedBox(height: 16),
-              _buildApplicationStatusCard(),
-              const SizedBox(height: 16),
-              // Add more cards here if needed
+              _buildApplicationStatusCard(context),
             ],
           ),
         ),
@@ -39,32 +66,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildWelcomeHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Добро пожаловать,',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        Text(
-          'Иван Иванов', // Replace with actual user name
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNearestClassesCard() {
+  Widget _buildNearestClassesCard(BuildContext context, List<ClassInfo> classes) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -82,31 +87,33 @@ class _HomePageState extends State<HomePage> {
                 IconButton(
                   icon: const Icon(Icons.calendar_today),
                   onPressed: () {
-                    // Navigate to schedule
+                    setState(() {
+                      _showCalendar = true; // Переключаем на календарь
+                    });
                   },
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildClassItem(
-              time: '09:00 - 10:30',
-              name: 'Математический анализ',
-              room: 'Аудитория 304',
-              teacher: 'Проф. Петров',
-            ),
-            const Divider(height: 24),
-            _buildClassItem(
-              time: '10:45 - 12:15',
-              name: 'Программирование',
-              room: 'Аудитория 412',
-              teacher: 'Доц. Сидорова',
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                // Show full schedule
-              },
-              child: const Text('Показать полное расписание'),
+            if (classes.isEmpty)
+              Center(
+                child: Text(
+                  'Нет пар на сегодня',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                ),
+              )
+            else
+              ...classes.map((classInfo) => [
+                _buildClassItem(context, classInfo),
+                if (classInfo != classes.last) const Divider(height: 24),
+              ]).expand((i) => i),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => _navigateToSchedulePage(context),
+                child: const Text('Показать полное расписание'),
+              ),
             ),
           ],
         ),
@@ -114,12 +121,102 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildClassItem({
-    required String time,
-    required String name,
-    required String room,
-    required String teacher,
-  }) {
+  Widget _buildDayCalendarCard(BuildContext context) {
+    final today = DateTime.now();
+    final formattedDate = DateFormat('EEEE, dd MMMM', 'ru_RU').format(today);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '$formattedDate',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () {
+                    setState(() {
+                      _showCalendar = false;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 500,
+              child: DayView(
+                controller: eventController,
+                showVerticalLine: true,
+                showLiveTimeLineInAllDays: true,
+                startHour: 8,
+                endHour: 20,
+                eventTileBuilder: (date, events, boundry, start, end) {
+                  final event = events.first;
+                  final classInfo = event.event as ClassInfo;
+
+                  return GestureDetector(
+                    onTap: () => _showClassDetails(context, classInfo),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary
+                              .withOpacity(0.2),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        event.title,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                hourIndicatorSettings: HourIndicatorSettings(
+                  color: Theme.of(context).dividerColor,
+                  height: 1,
+                  offset: 5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => _navigateToSchedulePage(context),
+                child: const Text('Показать полное расписание'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Остальные методы остаются без изменений
+  Widget _buildClassItem(BuildContext context, ClassInfo info) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,24 +234,20 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                time,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                '${info.type} / ${info.timeStart}-${info.timeEnd}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
               ),
               const SizedBox(height: 4),
               Text(
-                name,
+                info.name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                '$room • $teacher',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                '${info.room} • ${info.teacher}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
               ),
             ],
           ),
@@ -163,12 +256,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildApplicationStatusCard() {
+  Widget _buildApplicationStatusCard(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -181,34 +272,14 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildApplicationStatusItem(
-              title: 'Справка об обучении',
-              status: 'Готова',
-              statusColor: Colors.green,
-              date: 'Запрошена: 12.10.2023',
-            ),
-            const Divider(height: 24),
-            _buildApplicationStatusItem(
-              title: 'Справка в военкомат',
-              status: 'В обработке',
-              statusColor: Colors.orange,
-              date: 'Запрошена: 10.10.2023',
-            ),
-            const Divider(height: 24),
-            _buildApplicationStatusItem(
-              title: 'Справка о стипендии',
-              status: 'Отклонена',
-              statusColor: Colors.red,
-              date: 'Запрошена: 05.10.2023',
-              note: 'Необходимо уточнить данные',
-            ),
-            const SizedBox(height: 8),
+            ...mockApplications.map((app) => [
+              _buildApplicationStatusItem(context, app),
+              if (app != mockApplications.last) const Divider(height: 24),
+            ]).expand((i) => i),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {
-                  // Navigate to applications
-                },
+                onPressed: () {}, // TODO: Implement all applications view
                 child: const Text('Все заявки'),
               ),
             ),
@@ -218,13 +289,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildApplicationStatusItem({
-    required String title,
-    required String status,
-    required Color statusColor,
-    required String date,
-    String? note,
-  }) {
+  Widget _buildApplicationStatusItem(BuildContext context, ApplicationStatus item) {
+    final color = _statusColor(item.type);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -232,27 +299,22 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              title,
+              item.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w500,
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: statusColor.withOpacity(0.3),
-                ),
+                border: Border.all(color: color.withOpacity(0.3)),
               ),
               child: Text(
-                status,
+                item.status,
                 style: TextStyle(
-                  color: statusColor,
+                  color: color,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -261,15 +323,13 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 4),
         Text(
-          date,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          item.date,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
         ),
-        if (note != null) ...[
+        if (item.note != null) ...[
           const SizedBox(height: 4),
           Text(
-            note,
+            item.note!,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Colors.red[600],
               fontStyle: FontStyle.italic,
@@ -277,6 +337,109 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ],
+    );
+  }
+
+  void _showClassDetails(BuildContext context, ClassInfo classInfo) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                classInfo.name,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow('Тип:', classInfo.type),
+              _buildDetailRow('Время:', '${classInfo.timeStart}-${classInfo.timeEnd}'),
+              _buildDetailRow('Аудитория:', classInfo.room),
+              _buildDetailRow('Преподаватель:', classInfo.teacher),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Закрыть'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<CalendarEventData> _generateEventsFromClasses() {
+    final now = DateTime.now();
+    return mockClasses.map((classInfo) {
+      final startParts = classInfo.timeStart.split(':').map(int.parse).toList();
+      final endParts = classInfo.timeEnd.split(':').map(int.parse).toList();
+
+      final startTime = DateTime(
+        now.year, now.month, now.day,
+        startParts[0], startParts[1],
+      );
+      final endTime = DateTime(
+        now.year, now.month, now.day,
+        endParts[0], endParts[1],
+      );
+
+      return CalendarEventData(
+        date: now,
+        startTime: startTime,
+        endTime: endTime,
+        title: classInfo.name,
+        event: classInfo,
+      );
+    }).toList();
+  }
+
+  void _navigateToSchedulePage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MainLayout(child: const SchedulePage()),
+      ),
     );
   }
 }

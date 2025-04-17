@@ -1,8 +1,19 @@
-import 'package:equatable/equatable.dart';
+import '../data/cards.dart';
 
-abstract class HomeState extends Equatable {
-  const HomeState();
+abstract class HomeState {}
 
-  @override
-  List<Object?> get props => [];
+class HomeInitial extends HomeState {}
+
+class HomeLoading extends HomeState {}
+
+class HomeLoaded extends HomeState {
+  final List<ClassInfo> classes;
+  final List<ApplicationStatus> applications;
+
+  HomeLoaded({required this.classes, required this.applications});
+}
+
+class HomeError extends HomeState {
+  final String message;
+  HomeError(this.message);
 }

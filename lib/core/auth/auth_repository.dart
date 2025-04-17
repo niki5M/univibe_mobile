@@ -33,7 +33,8 @@ class AuthRepository {
 
       if (result != null) {
         final userProfile = await fetchUserProfile(result.accessToken!);
-
+        print('Access: ${result.accessToken}');
+        print('Refresh: ${result.refreshToken}');
         return {
           'accessToken': result.accessToken ?? '',
           'refreshToken': result.refreshToken ?? '',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../features/cart/floormap_screen.dart';
 import '../../../features/home/presentation/home_page.dart';
 import '../../../features/schedule/presentation/schedule_page.dart';
 import '../../layout/main_layout.dart';
@@ -42,7 +43,7 @@ class LoginPage extends StatelessWidget {
                   children: [
                     Image.asset(
                       'assets/icons/logo.png',
-                      height: 130,
+                      height: 80,
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -50,17 +51,20 @@ class LoginPage extends StatelessWidget {
                         context.read<AuthBloc>().add(AuthLoginRequested());
                       },
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black87,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 14,
                         ),
+                        shadowColor: Color(0xFF6D58D0),
+                        elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: const Text(
                         "Войти через SSO",
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                     ),
                   ],
