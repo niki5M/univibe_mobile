@@ -12,7 +12,7 @@ class MainLayout extends StatelessWidget {
     final currentRoute = ModalRoute.of(context)?.settings.name;
 
     return Scaffold(
-      appBar: (currentRoute == '/profile' || currentRoute == '/login')
+      appBar: (currentRoute == '/profile' || currentRoute == '/login'|| currentRoute == '/gradbook')
           ? null
           : const CustomAppBar(),
       body: child,

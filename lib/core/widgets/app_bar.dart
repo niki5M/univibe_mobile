@@ -16,6 +16,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final popoverController = ShadPopoverController();
+
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -26,12 +28,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildUserProfile(context),
-            _buildActionIcons(context),
+            _buildActionIcons(context, popoverController),
           ],
         ),
       ),
     );
   }
+
 
 
   Widget _buildUserProfile(BuildContext context) {
@@ -99,18 +102,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildActionIcons(BuildContext context) {
+  Widget _buildActionIcons(BuildContext context, ShadPopoverController controller) {
     return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
         if (state is ProfileLoaded) {
           return Row(
             children: [
-              ShadButton.ghost(
-                padding: const EdgeInsets.all(6),
-                child: const Icon(LucideIcons.bellRing, size: 24),
-                onPressed: () {
-                  // TODO: Реализовать обработку уведомлений
-                },
+              ShadPopover.new(
+                controller: controller,
+                popover: (context) => _buildNotificationPopover(context),
+                child: ShadButton.ghost(
+                  padding: const EdgeInsets.all(6),
+                  onPressed: () {
+                    controller.toggle(); // Открывает/закрывает popover
+                  },
+                  child: const Icon(LucideIcons.bellRing, size: 24),
+                ),
               ),
               ShadButton.ghost(
                 padding: const EdgeInsets.all(6),
@@ -135,6 +142,50 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       builder: (context) => ShadProfileSheet(profile: profile),
     );
   }
+}
+
+Widget _buildNotificationPopover(BuildContext context) {
+  final theme = ShadTheme.of(context);
+  return Container(
+    width: 250,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: theme.colorScheme.popover,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          "Уведомления",
+          style: theme.textTheme.muted.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...List.generate(3, (i) => _buildNotificationItem(theme, i + 1)),
+      ],
+    ),
+  );
+}
+
+Widget _buildNotificationItem(ShadThemeData theme, int number) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      children: [
+        Icon(LucideIcons.mail, size: 20, color: theme.colorScheme.foreground),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Новое уведомление #$number',
+            style: TextStyle(fontSize: 13, color: theme.colorScheme.foreground),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class ShadProfileSheet extends StatelessWidget {

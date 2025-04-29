@@ -8,6 +8,8 @@ import 'package:uni_mobile/features/profile/bloc/profile_bloc.dart';
 import 'package:uni_mobile/features/profile/bloc/profile_event.dart';
 import 'package:uni_mobile/features/schedule/bloc/schedule_bloc.dart';
 
+import '../../features/gradebook/bloc/book_bloc.dart';
+
 class AppDependencies {
   static List<BlocProvider> get providers => [
     BlocProvider<HomeBloc>(
@@ -15,6 +17,9 @@ class AppDependencies {
     ),
     BlocProvider<ScheduleBloc>(
       create: (context) => ScheduleBloc(),
+    ),
+    BlocProvider<GradeBloc>(
+      create: (context) => GradeBloc(),
     ),
     BlocProvider<ThemeBloc>(
       create: (context) => ThemeBloc(),

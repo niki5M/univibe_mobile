@@ -1,9 +1,12 @@
-import 'package:calendar_view/calendar_view.dart';
+import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uni_mobile/features/schedule/presentation/schedule_page.dart';
 import '../../../core/layout/main_layout.dart';
 import '../data/cards.dart';
+import '../data/news.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,65 +16,135 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final EventController eventController;
-  bool _showCalendar = false; // Добавляем состояние для переключения вида
+  DateTime _selectedDate = DateTime.now();
+
 
   @override
   void initState() {
     super.initState();
-    eventController = EventController()..addAll(_generateEventsFromClasses());
-  }
-
-  @override
-  void dispose() {
-    eventController.dispose();
-    super.dispose();
-  }
-
-  Color _statusColor(StatusType type) {
-    switch (type) {
-      case StatusType.ready:
-        return Colors.green;
-      case StatusType.inProgress:
-        return Colors.orange;
-      case StatusType.rejected:
-        return Colors.red;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final upcomingClasses = mockClasses.take(3).toList();
+    final upcomingClasses = _getClassesForDate(_selectedDate);
 
-    return CalendarControllerProvider(
-      controller: eventController,
-      child: Scaffold(
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Условный рендеринг в зависимости от состояния _showCalendar
-              if (!_showCalendar)
-                _buildNearestClassesCard(context, upcomingClasses),
-              if (_showCalendar)
-                _buildDayCalendarCard(context),
-
-              const SizedBox(height: 16),
-              _buildApplicationStatusCard(context),
-            ],
-          ),
+    return Scaffold(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDayCalendarCard(context, upcomingClasses),
+            const SizedBox(height: 16),
+            _buildNewsList(context),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNearestClassesCard(BuildContext context, List<ClassInfo> classes) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildNewsList(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Text(
+            'Новости',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (mockNews.isEmpty)
+          const Center(child: Text('Новости не найдены'))
+        else
+          SizedBox(
+            height: 180,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: mockNews.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final news = mockNews[index];
+                return SizedBox(
+                  width: 300,
+                  child: ShadCard(
+                    radius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              news.imageUrl,
+                              height: 150,
+                              width: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                height: 150,
+                                width: 100,
+                                color: Colors.grey.shade200,
+                                alignment: Alignment.center,
+                                child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    news.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    news.description,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    news.date,
+                                    style: theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+
+  Widget _buildDayCalendarCard(BuildContext context, List<ClassInfo> classes) {
+    final formattedDate = DateFormat('EEEE, dd MMMM', 'ru_RU').format(_selectedDate);
+
+    return ShadCard(
+      radius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -79,33 +152,52 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Ближайшие пары',
+                  formattedDate,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: () {
-                    setState(() {
-                      _showCalendar = true; // Переключаем на календарь
-                    });
-                  },
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.calendar_today),
+                //   onPressed: () => _navigateToSchedulePage(context),
+                // ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            EasyDateTimeLine(
+              initialDate: _selectedDate,
+              onDateChange: (selectedDate) {
+                setState(() {
+                  _selectedDate = selectedDate;
+                });
+              },
+              headerProps: const EasyHeaderProps(
+                showHeader: false,
+              ),
+              dayProps: const EasyDayProps(
+                height: 50,
+                width: 50,
+                dayStructure: DayStructure.dayStrDayNum,
+                activeDayStyle: DayStyle(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF6D58D0),
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             if (classes.isEmpty)
               Center(
                 child: Text(
-                  'Нет пар на сегодня',
+                  'Нет пар на выбранный день',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 ),
               )
             else
               ...classes.map((classInfo) => [
                 _buildClassItem(context, classInfo),
-                if (classInfo != classes.last) const Divider(height: 24),
+                if (classInfo != classes.last) const Divider(height: 16),
               ]).expand((i) => i),
             const SizedBox(height: 12),
             Align(
@@ -121,222 +213,75 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDayCalendarCard(BuildContext context) {
-    final today = DateTime.now();
-    final formattedDate = DateFormat('EEEE, dd MMMM', 'ru_RU').format(today);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Theme.of(context).dividerColor,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$formattedDate',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: () {
-                    setState(() {
-                      _showCalendar = false;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 500,
-              child: DayView(
-                controller: eventController,
-                showVerticalLine: true,
-                showLiveTimeLineInAllDays: true,
-                startHour: 8,
-                endHour: 20,
-                eventTileBuilder: (date, events, boundry, start, end) {
-                  final event = events.first;
-                  final classInfo = event.event as ClassInfo;
-
-                  return GestureDetector(
-                    onTap: () => _showClassDetails(context, classInfo),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.primary
-                              .withOpacity(0.2),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        event.title,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                hourIndicatorSettings: HourIndicatorSettings(
-                  color: Theme.of(context).dividerColor,
-                  height: 1,
-                  offset: 5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => _navigateToSchedulePage(context),
-                child: const Text('Показать полное расписание'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Остальные методы остаются без изменений
   Widget _buildClassItem(BuildContext context, ClassInfo info) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 4,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    IconData icon;
+    Color color;
+
+    switch (info.type.toLowerCase()) {
+      case 'лекция':
+        icon = Icons.school;
+        color = Color(0xff87A9FF);
+        break;
+      case 'практика':
+        icon = LucideIcons.settings;
+        color = Color(0xff31C2BB);
+        break;
+      default:
+        icon = Icons.help_outline;
+        color = Colors.grey;
+    }
+
+    return InkWell(
+      onTap: () => _showClassDetails(context, info),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
             children: [
-              Text(
-                '${info.type} / ${info.timeStart}-${info.timeEnd}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                info.name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+              Icon(icon, color: color, size: 20 ),
+              const SizedBox(height: 10),
+              Container(
+                width: 4,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${info.room} • ${info.teacher}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildApplicationStatusCard(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Состояние заявок на справки',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...mockApplications.map((app) => [
-              _buildApplicationStatusItem(context, app),
-              if (app != mockApplications.last) const Divider(height: 24),
-            ]).expand((i) => i),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {}, // TODO: Implement all applications view
-                child: const Text('Все заявки'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildApplicationStatusItem(BuildContext context, ApplicationStatus item) {
-    final color = _statusColor(item.type);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              item.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withOpacity(0.3)),
-              ),
-              child: Text(
-                item.status,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${info.type} / ${info.timeStart}-${info.timeEnd}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          item.date,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-        ),
-        if (item.note != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            item.note!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.red[600],
-              fontStyle: FontStyle.italic,
+                const SizedBox(height: 4),
+                Text(
+                  info.name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(LucideIcons.mapPin, color: Colors.grey[600]),
+                    Text(
+                      '${info.room} • ${info.teacher}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 
@@ -410,28 +355,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  List<CalendarEventData> _generateEventsFromClasses() {
-    final now = DateTime.now();
-    return mockClasses.map((classInfo) {
-      final startParts = classInfo.timeStart.split(':').map(int.parse).toList();
-      final endParts = classInfo.timeEnd.split(':').map(int.parse).toList();
+  List<ClassInfo> _getClassesForDate(DateTime date) {
+    final selectedDayName = DateFormat('EEEE', 'ru_RU').format(date).toLowerCase();
 
-      final startTime = DateTime(
-        now.year, now.month, now.day,
-        startParts[0], startParts[1],
-      );
-      final endTime = DateTime(
-        now.year, now.month, now.day,
-        endParts[0], endParts[1],
-      );
-
-      return CalendarEventData(
-        date: now,
-        startTime: startTime,
-        endTime: endTime,
-        title: classInfo.name,
-        event: classInfo,
-      );
+    return mockClasses.where((classInfo) {
+      final mockDayName = classInfo.date.split(',').first.trim().toLowerCase();
+      return mockDayName == selectedDayName;
     }).toList();
   }
 
